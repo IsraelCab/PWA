@@ -29,3 +29,40 @@ self.addEventListener('install', e => {
     );
 
 });
+
+// Activate event to work offline
+
+self.addEventListener('activate', e => {
+    const cacheWhiteList = [CACHE_NAME];
+
+    e.waitUntil(
+        caches.keys()
+            .then(cacheNames => {
+                return Promise.all(
+                    cacheNames.map(cacheName => {
+                        if(cacheWhiteList.indexOf(cacheName) == -1)
+                        {
+                            return cache.delete(cacheName);
+                        }
+                    })
+                );
+            })
+            .then(() => {
+                self.clients.claim();
+            })
+    );
+})
+
+// Fetch event
+self.addEventListener('fetch', e => {
+    e.respondWith(
+        caches.match(e.request)
+            .then(res => {
+                if(res){
+                    return res;
+                }
+                return fetch(e.request);
+
+            })
+    );
+});
